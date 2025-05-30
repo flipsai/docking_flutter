@@ -9,12 +9,12 @@ import 'dart:math' as math;
 /// Callback function type for when a DockingArea's dimensions change.
 typedef OnAreaDimensionsChange = void Function(DockingArea area);
 
-/// A StatelessWidget that uses ValueListenableBuilder to potentially react to changes 
+/// A StatelessWidget that uses ValueListenableBuilder to potentially react to changes
 /// related to a specific DockingArea, if a suitable ValueListenable is provided.
 class _AreaWatcher extends StatelessWidget {
   const _AreaWatcher({
     Key? key,
-    required this.area, 
+    required this.area,
     required this.child,
     // Optional: Pass a real ValueListenable later if DockingArea exposes one
     // this.listenable,
@@ -44,21 +44,20 @@ class _AreaWatcher extends StatelessWidget {
 
 /// The docking widget.
 class Docking extends StatefulWidget {
-  const Docking(
-      {Key? key,
-      this.layout,
-      this.onItemSelection,
-      this.onItemClose,
-      this.itemCloseInterceptor,
-      this.dockingButtonsBuilder,
-      this.maximizableItem = true,
-      this.maximizableTab = true,
-      this.maximizableTabsArea = true,
-      this.antiAliasingWorkaround = true,
-      this.draggable = true,
-      this.onAreaDimensionsChange,
-      })
-      : super(key: key);
+  const Docking({
+    Key? key,
+    this.layout,
+    this.onItemSelection,
+    this.onItemClose,
+    this.itemCloseInterceptor,
+    this.dockingButtonsBuilder,
+    this.maximizableItem = true,
+    this.maximizableTab = true,
+    this.maximizableTabsArea = true,
+    this.antiAliasingWorkaround = true,
+    this.draggable = true,
+    this.onAreaDimensionsChange,
+  }) : super(key: key);
 
   final DockingLayout? layout;
   final OnItemSelection? onItemSelection;
@@ -154,13 +153,13 @@ class _DockingState extends State<Docking> {
     } else if (area is DockingColumn) {
       actualBuiltWidget = _column(area);
     } else if (area is DockingTabs) {
-      if (area.childrenCount == 1 && area.childAt(0) is DockingItem) {
+      if (area.childrenCount == 1) {
         actualBuiltWidget = DockingItemWidget(
             key: area.key,
             layout: widget.layout!,
             dragOverPosition: _dragOverPosition,
             draggable: widget.draggable,
-            item: area.childAt(0) as DockingItem,
+            item: area.childAt(0),
             onItemSelection: widget.onItemSelection,
             itemCloseInterceptor: widget.itemCloseInterceptor,
             onItemClose: widget.onItemClose,
@@ -192,7 +191,8 @@ class _DockingState extends State<Docking> {
         return MultiSplitView(
           axis: Axis.horizontal,
           controller: _buildController(row),
-          onWeightChange: () => _updateAreaDimensions(row, constraints, Axis.horizontal),
+          onWeightChange: () =>
+              _updateAreaDimensions(row, constraints, Axis.horizontal),
           children: _buildDockingChildren(row),
         );
       },
@@ -205,7 +205,8 @@ class _DockingState extends State<Docking> {
         return MultiSplitView(
           axis: Axis.vertical,
           controller: _buildController(column),
-          onWeightChange: () => _updateAreaDimensions(column, constraints, Axis.vertical),
+          onWeightChange: () =>
+              _updateAreaDimensions(column, constraints, Axis.vertical),
           children: _buildDockingChildren(column),
         );
       },
@@ -218,7 +219,8 @@ class _DockingState extends State<Docking> {
     } else if (area is DockingColumn) {
       return area.controller;
     } else {
-      throw UnimplementedError('Unsupported area type for controller: ${area.runtimeType}');
+      throw UnimplementedError(
+          'Unsupported area type for controller: ${area.runtimeType}');
     }
   }
 
@@ -241,29 +243,35 @@ class _DockingState extends State<Docking> {
   }
 
   /// Updates the pixel dimensions of child areas after a resize.
-  void _updateAreaDimensions(DockingParentArea parentArea, BoxConstraints constraints, Axis axis) {
+  void _updateAreaDimensions(
+      DockingParentArea parentArea, BoxConstraints constraints, Axis axis) {
     final MultiSplitViewController controller = _buildController(parentArea);
     final List<Area> areas = controller.areas.toList();
     final List<double> weights = areas.map((a) => a.weight ?? 0.0).toList();
     final double totalWeight = weights.fold(0.0, (sum, w) => sum + w);
-    
-    final double availableSpace = (axis == Axis.horizontal ? constraints.maxWidth : constraints.maxHeight);
 
-    if (totalWeight <= 0 || availableSpace <= 0 || areas.length != parentArea.childrenCount) {
-        print("Skipping dimension update: totalWeight=$totalWeight, availableSpace=$availableSpace, areaCount=${areas.length}, dockingChildCount=${parentArea.childrenCount}");
-        return;
+    final double availableSpace = (axis == Axis.horizontal
+        ? constraints.maxWidth
+        : constraints.maxHeight);
+
+    if (totalWeight <= 0 ||
+        availableSpace <= 0 ||
+        areas.length != parentArea.childrenCount) {
+      print(
+          "Skipping dimension update: totalWeight=$totalWeight, availableSpace=$availableSpace, areaCount=${areas.length}, dockingChildCount=${parentArea.childrenCount}");
+      return;
     }
 
     for (int i = 0; i < areas.length; i++) {
       final Area area = areas[i];
       DockingArea dockingArea;
       try {
-         dockingArea = parentArea.childAt(i);
+        dockingArea = parentArea.childAt(i);
       } catch (e) {
-         print("Error getting DockingArea child at index $i: $e");
-         continue;
+        print("Error getting DockingArea child at index $i: $e");
+        continue;
       }
-      
+
       final double childWeight = weights[i];
       final double proportion = childWeight / totalWeight;
       double childDimension = availableSpace * proportion;
@@ -274,18 +282,22 @@ class _DockingState extends State<Docking> {
       double? newHeight = axis == Axis.vertical ? childDimension : null;
 
       if (axis == Axis.horizontal && newWidth != null) {
-          newHeight = constraints.hasBoundedHeight ? constraints.maxHeight : dockingArea.height;
+        newHeight = constraints.hasBoundedHeight
+            ? constraints.maxHeight
+            : dockingArea.height;
       } else if (axis == Axis.vertical && newHeight != null) {
-          newWidth = constraints.hasBoundedWidth ? constraints.maxWidth : dockingArea.width;
+        newWidth = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : dockingArea.width;
       }
 
       // Update the Area object's primary size for MultiSplitView layout
       area.updateSize(childDimension);
-      
-      // Update the width/height properties on the Area/DockingArea for persistence 
+
+      // Update the width/height properties on the Area/DockingArea for persistence
       // (updateDimensions now only sets width/height)
       dockingArea.updateDimensions(newWidth, newHeight);
-      
+
       // Trigger the callback to notify listeners (like the main app)
       widget.onAreaDimensionsChange?.call(dockingArea);
     }

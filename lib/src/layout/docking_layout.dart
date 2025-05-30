@@ -55,7 +55,7 @@ abstract class DockingArea extends Area {
 
   bool get disposed => _disposed;
 
-  Key _key = UniqueKey();
+  final Key _key = UniqueKey();
 
   @internal
   Key get key => _key;
@@ -82,18 +82,18 @@ abstract class DockingArea extends Area {
     } else if (type == DockingAreaType.tabs) {
       return 'T';
     }
-    throw StateError('DockingAreaType not recognized: ' + type.toString());
+    throw StateError('DockingAreaType not recognized: $type');
   }
 
   /// Gets the path in the layout hierarchy.
   String get path {
-    String _path = typeAcronym;
+    String path = typeAcronym;
     DockingParentArea? p = _parent;
     while (p != null) {
-      _path = p.typeAcronym + _path;
+      path = p.typeAcronym + path;
       p = p._parent;
     }
-    return _path;
+    return path;
   }
 
   /// Gets the level in the layout hierarchy.
@@ -112,7 +112,7 @@ abstract class DockingArea extends Area {
   /// Updates recursively the information of parent, index and layoutId.
   int _updateHierarchy(
       DockingParentArea? parentArea, int nextIndex, int layoutId) {
-    if (this.disposed) {
+    if (disposed) {
       throw StateError('Disposed area');
     }
     _parent = parentArea;
@@ -159,15 +159,15 @@ abstract class DockingParentArea extends DockingArea {
       double? weight,
       double? minimalWeight,
       double? minimalSize})
-      : this._children = children,
+      : _children = children,
         super(
             id: id,
             size: size,
             weight: weight,
             minimalWeight: minimalWeight,
             minimalSize: minimalSize) {
-    for (DockingArea child in this._children) {
-      if (child.runtimeType == this.runtimeType) {
+    for (DockingArea child in _children) {
+      if (child.runtimeType == runtimeType) {
         throw ArgumentError(
             'DockingParentArea cannot have children of the same type');
       }
@@ -197,13 +197,13 @@ abstract class DockingParentArea extends DockingArea {
 
   /// Applies the function [f] to each child of this collection in iteration
   /// order.
-  void forEach(void f(DockingArea child)) {
+  void forEach(void Function(DockingArea child) f) {
     _children.forEach(f);
   }
 
   /// Applies the function [f] to each child of this collection in iteration
   /// reversed order.
-  void forEachReversed(void f(DockingArea child)) {
+  void forEachReversed(void Function(DockingArea child) f) {
     _children.reversed.forEach(f);
   }
 
@@ -223,11 +223,8 @@ abstract class DockingParentArea extends DockingArea {
       bool levelInfo = false,
       bool hasParentInfo = false,
       bool nameInfo = false}) {
-    String str = super.hierarchy(
-            indexInfo: indexInfo,
-            levelInfo: levelInfo,
-            hasParentInfo: hasParentInfo) +
-        '(';
+    String str =
+        '${super.hierarchy(indexInfo: indexInfo, levelInfo: levelInfo, hasParentInfo: hasParentInfo)}(';
     for (int i = 0; i < _children.length; i++) {
       if (i > 0) {
         str += ',';
@@ -264,9 +261,9 @@ class DockingItem extends DockingArea with DropArea {
       double? weight,
       double? minimalWeight,
       double? minimalSize})
-      : this.buttons = buttons != null ? List.unmodifiable(buttons) : [],
-        this.globalKey = keepAlive ? GlobalKey() : null,
-        this._maximized = maximized,
+      : buttons = buttons != null ? List.unmodifiable(buttons) : [],
+        globalKey = keepAlive ? GlobalKey() : null,
+        _maximized = maximized,
         super(
             id: id,
             size: size,
@@ -333,7 +330,7 @@ class DockingRow extends DockingParentArea {
             minimalWeight: minimalWeight,
             minimalSize: minimalSize) {
     controller = MultiSplitViewController(areas: children);
-    if (this._children.length < 2) {
+    if (_children.length < 2) {
       throw ArgumentError('Insufficient number of children');
     }
   }
@@ -386,7 +383,7 @@ class DockingColumn extends DockingParentArea {
             minimalWeight: minimalWeight,
             minimalSize: minimalSize) {
     controller = MultiSplitViewController(areas: children);
-    if (this._children.length < 2) {
+    if (_children.length < 2) {
       throw ArgumentError('Insufficient number of children');
     }
   }
@@ -435,14 +432,14 @@ class DockingTabs extends DockingParentArea with DropArea {
       double? weight,
       double? minimalWeight,
       double? minimalSize})
-      : this._maximized = maximized,
+      : _maximized = maximized,
         super(children,
             id: id,
             size: size,
             weight: weight,
             minimalWeight: minimalWeight,
             minimalSize: minimalSize) {
-    if (this._children.length == 0) {
+    if (_children.isEmpty) {
       throw ArgumentError('DockingTabs cannot be empty');
     }
   }
@@ -458,10 +455,10 @@ class DockingTabs extends DockingParentArea with DropArea {
   DockingItem childAt(int index) => _children[index] as DockingItem;
 
   @override
-  void forEach(void f(DockingItem child)) {
-    _children.forEach((child) {
+  void forEach(void Function(DockingItem child) f) {
+    for (var child in _children) {
       f(child as DockingItem);
-    });
+    }
   }
 
   @override
@@ -478,12 +475,12 @@ class DockingTabs extends DockingParentArea with DropArea {
 /// The [root] is single and can be any [DockingArea].
 class DockingLayout extends ChangeNotifier {
   /// Builds a [DockingLayout].
-  DockingLayout({DockingArea? root}) : this._root = root {
+  DockingLayout({DockingArea? root}) : _root = root {
     _reset();
   }
 
   /// The id of this layout.
-  int get id => this.hashCode;
+  int get id => hashCode;
 
   /// The protected root of this layout.
   DockingArea? _root;
@@ -723,7 +720,7 @@ class DockingLayout extends ChangeNotifier {
       _root = modifier.newLayout(this);
       _updateHierarchy();
 
-      olderAreas.forEach((area) {
+      for (var area in olderAreas) {
         if (area is DockingParentArea) {
           area._dispose();
         } else if (area is DockingItem) {
@@ -731,7 +728,7 @@ class DockingLayout extends ChangeNotifier {
             area._dispose();
           }
         }
-      });
+      }
     }
     _maximizedArea = null;
     layoutAreas().forEach((area) {

@@ -107,14 +107,14 @@ class LayoutFactory {
           maximized: parent.maximized);
     } else if (parent is _ParentConfig) {
       List<DockingArea> children = [];
-      parent.childrenIndexes.forEach((childIndex) {
+      for (var childIndex in parent.childrenIndexes) {
         final _AreaConfig childConfig = areas.getArea(childIndex);
         children.add(_buildArea(
             parser: parser,
             builder: builder,
             parent: childConfig,
             areas: areas));
-      });
+      }
       if (parent is _RowConfig) {
         return builder.buildDockingRow(
             id: parser.stringToId(parent.id),

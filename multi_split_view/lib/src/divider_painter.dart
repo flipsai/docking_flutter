@@ -122,7 +122,7 @@ class DividerPainter {
 
   /// Builds a tween map for animations.
   Map<int, Tween> buildTween() {
-    Map<int, Tween> map = Map<int, Tween>();
+    Map<int, Tween> map = <int, Tween>{};
     if (animationEnabled &&
         backgroundColor != null &&
         highlightedBackgroundColor != null) {
@@ -241,26 +241,26 @@ class _DashedDividerPainter extends DividerPainter {
         canvas: canvas,
         dividerSize: dividerSize,
         animatedValues: animatedValues);
-    Color? _color;
+    Color? color;
     if (animationEnabled && animatedValues.containsKey(colorKey)) {
-      _color = animatedValues[colorKey];
+      color = animatedValues[colorKey];
     } else if (highlighted && highlightedColor != null) {
-      _color = highlightedColor!;
+      color = highlightedColor!;
     } else {
-      _color = color;
+      color = color;
     }
 
-    if (_color != null) {
-      double _thickness = thickness;
+    if (color != null) {
+      double thickness = this.thickness;
       if (animationEnabled && animatedValues.containsKey(thicknessKey)) {
-        _thickness = animatedValues[thicknessKey];
+        thickness = animatedValues[thicknessKey];
       } else if (highlighted && highlightedThickness != null) {
-        _thickness = highlightedThickness!;
+        thickness = highlightedThickness!;
       }
       var paint = Paint()
         ..style = PaintingStyle.stroke
-        ..color = _color
-        ..strokeWidth = _thickness
+        ..color = color
+        ..strokeWidth = thickness
         ..strokeCap = strokeCap
         ..isAntiAlias = true;
       if (dividerAxis == Axis.vertical) {
@@ -386,42 +386,42 @@ class _GroovedDividerPainter1 extends DividerPainter {
         canvas: canvas,
         dividerSize: dividerSize,
         animatedValues: animatedValues);
-    Color? _color;
+    Color? color;
     if (animationEnabled && animatedValues.containsKey(colorKey)) {
-      _color = animatedValues[colorKey];
+      color = animatedValues[colorKey];
     } else if (highlighted && highlightedColor != null) {
-      _color = highlightedColor!;
+      color = highlightedColor!;
     } else {
-      _color = color;
+      color = color;
     }
 
-    if (_color != null) {
-      double _thickness = thickness;
+    if (color != null) {
+      double thickness = this.thickness;
       if (animationEnabled && animatedValues.containsKey(thicknessKey)) {
-        _thickness = animatedValues[thicknessKey];
+        thickness = animatedValues[thicknessKey];
       } else if (highlighted && highlightedThickness != null) {
-        _thickness = highlightedThickness!;
+        thickness = highlightedThickness!;
       }
-      double _size = size;
+      double size = this.size;
       if (animationEnabled && animatedValues.containsKey(sizeKey)) {
-        _size = animatedValues[sizeKey];
+        size = animatedValues[sizeKey];
       } else if (highlighted && highlightedSize != null) {
-        _size = highlightedSize!;
+        size = highlightedSize!;
       }
       var paint = Paint()
         ..style = PaintingStyle.stroke
-        ..color = _color
-        ..strokeWidth = _thickness
+        ..color = color
+        ..strokeWidth = thickness
         ..strokeCap = strokeCap
         ..isAntiAlias = true;
       if (dividerAxis == Axis.vertical) {
-        double startY = (dividerSize.height - _size) / 2;
+        double startY = (dividerSize.height - size) / 2;
         canvas.drawLine(Offset(dividerSize.width / 2, startY),
-            Offset(dividerSize.width / 2, startY + _size), paint);
+            Offset(dividerSize.width / 2, startY + size), paint);
       } else {
-        double startX = (dividerSize.width - _size) / 2;
+        double startX = (dividerSize.width - size) / 2;
         canvas.drawLine(Offset(startX, dividerSize.height / 2),
-            Offset(startX + _size, dividerSize.height / 2), paint);
+            Offset(startX + size, dividerSize.height / 2), paint);
       }
     }
   }
@@ -543,45 +543,45 @@ class _GroovedDividerPainter2 extends DividerPainter {
         canvas: canvas,
         dividerSize: dividerSize,
         animatedValues: animatedValues);
-    Color? _color;
+    Color? color;
     if (animationEnabled && animatedValues.containsKey(colorKey)) {
-      _color = animatedValues[colorKey];
+      color = animatedValues[colorKey];
     } else if (highlighted && highlightedColor != null) {
-      _color = highlightedColor!;
+      color = highlightedColor!;
     } else {
-      _color = color;
+      color = color;
     }
 
-    if (_color != null) {
-      int _count = count;
+    if (color != null) {
+      int count = this.count;
       if (animationEnabled && animatedValues.containsKey(countKey)) {
-        _count = animatedValues[countKey];
-        if (_count.isEven) {
-          _count--;
+        count = animatedValues[countKey];
+        if (count.isEven) {
+          count--;
         }
       } else if (highlighted && highlightedCount != null) {
-        _count = highlightedCount!;
+        count = highlightedCount!;
       }
 
       var paint = Paint()
         ..style = PaintingStyle.stroke
-        ..color = _color
+        ..color = color
         ..strokeWidth = thickness
         ..strokeCap = strokeCap
         ..isAntiAlias = true;
 
-      double groovesSize = (_count - 1) * gap;
+      double groovesSize = (count - 1) * gap;
       if (dividerAxis == Axis.vertical) {
         double startY = (dividerSize.height - groovesSize) / 2;
         double x = (dividerSize.width - size) / 2;
-        for (int i = 0; i < _count; i++) {
+        for (int i = 0; i < count; i++) {
           canvas.drawLine(Offset(x, startY + (gap * i)),
               Offset(x + size, startY + (gap * i)), paint);
         }
       } else {
         double startX = (dividerSize.width - groovesSize) / 2;
         double y = (dividerSize.height - size) / 2;
-        for (int i = 0; i < _count; i++) {
+        for (int i = 0; i < count; i++) {
           canvas.drawLine(Offset(startX + (gap * i), y),
               Offset(startX + (gap * i), y + size), paint);
         }

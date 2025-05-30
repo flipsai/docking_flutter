@@ -35,8 +35,7 @@ class MultiSplitView extends StatefulWidget {
       this.resizable = true,
       this.antiAliasingWorkaround = true,
       List<Area>? initialAreas})
-      : this.initialAreas =
-            initialAreas != null ? List.from(initialAreas) : null,
+      : initialAreas = initialAreas != null ? List.from(initialAreas) : null,
         super(key: key);
 
   final Axis axis;
@@ -144,7 +143,7 @@ class _MultiSplitViewState extends State<MultiSplitView> {
       _draggingDividerIndex = null;
       _lastAreasUpdateHash = _controller.areasUpdateHash;
     }
-    if (widget.children.length > 0) {
+    if (widget.children.isNotEmpty) {
       MultiSplitViewThemeData themeData = MultiSplitViewTheme.of(context);
 
       return LayoutBuilder(builder: (context, constraints) {

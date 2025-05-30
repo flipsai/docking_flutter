@@ -38,7 +38,7 @@ class Area {
 
   final double? minimalWeight;
   final double? minimalSize;
-  
+
   double? width;
   double? height;
 
@@ -53,13 +53,13 @@ class Area {
     _size = null;
     _weight = value;
   }
-  
+
   @internal
   void updateSize(double? value) {
     _size = value;
     _weight = null; // Prioritize size over weight when explicitly set
   }
-  
+
   @internal
   void updateDimensions(double? newWidth, double? newHeight) {
     // Only set width and height properties here
@@ -71,10 +71,10 @@ class Area {
     }
     // Do NOT modify _size or _weight here.
   }
-  
+
   @internal
   void updateWidthAfterResize(double newWidth) => width = newWidth;
-  
+
   @internal
   void updateHeightAfterResize(double newHeight) => height = newHeight;
 
@@ -96,13 +96,17 @@ class Area {
 
   static List<Area> sizes(List<double> sizes) {
     List<Area> list = [];
-    sizes.forEach((size) => list.add(Area(size: size)));
+    for (var size in sizes) {
+      list.add(Area(size: size));
+    }
     return list;
   }
 
   static List<Area> weights(List<double> weights) {
     List<Area> list = [];
-    weights.forEach((weight) => list.add(Area(weight: weight)));
+    for (var weight in weights) {
+      list.add(Area(weight: weight));
+    }
     return list;
   }
 }

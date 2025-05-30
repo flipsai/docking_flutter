@@ -48,9 +48,9 @@ class MultiSplitViewController extends ChangeNotifier {
   /// Sum of all weights.
   double _weightSum() {
     double sum = 0;
-    _areas.forEach((area) {
+    for (var area in _areas) {
       sum += area.weight ?? 0;
-    });
+    }
     return sum;
   }
 

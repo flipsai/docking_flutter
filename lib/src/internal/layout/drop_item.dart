@@ -30,7 +30,7 @@ class DropItem extends LayoutModifier {
           'Argument draggedItem cannot be the same as argument targetArea. A DockingItem cannot be rearranged on itself.');
     }
     validateDropItem(layout, dropItem);
-    if (!(targetArea is DockingArea)) {
+    if (targetArea is! DockingArea) {
       throw ArgumentError('Argument targetArea is not a DockingArea.');
     }
     validateTargetArea(layout, targetArea as DockingArea);
@@ -92,8 +92,7 @@ class DropItem extends LayoutModifier {
               minimalSize: dockingItem.minimalSize,
               minimalWeight: dockingItem.minimalWeight);
         } else {
-          throw ArgumentError(
-              'DropPosition not recognized: ' + dropPosition.toString());
+          throw ArgumentError('DropPosition not recognized: $dropPosition');
         }
       }
       return area;
@@ -167,8 +166,7 @@ class DropItem extends LayoutModifier {
         } else if (dropPosition == DropPosition.right) {
           return DockingRow([newArea, newDraggedItem]);
         } else {
-          throw ArgumentError(
-              'DropPosition not recognized: ' + dropPosition.toString());
+          throw ArgumentError('DropPosition not recognized: $dropPosition');
         }
       }
       return newArea;
@@ -180,7 +178,7 @@ class DropItem extends LayoutModifier {
           children.add(newChild);
         }
       });
-      if (children.length == 0) {
+      if (children.isEmpty) {
         return null;
       } else if (children.length == 1) {
         return children.first;
@@ -196,10 +194,8 @@ class DropItem extends LayoutModifier {
             minimalWeight: area.minimalWeight,
             minimalSize: area.minimalSize);
       }
-      throw StateError(
-          'DockingArea class not recognized: ' + area.runtimeType.toString());
+      throw StateError('DockingArea class not recognized: ${area.runtimeType}');
     }
-    throw StateError(
-        'DockingArea class not recognized: ' + area.runtimeType.toString());
+    throw StateError('DockingArea class not recognized: ${area.runtimeType}');
   }
 }

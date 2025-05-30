@@ -50,7 +50,7 @@ class RemoveItemById extends LayoutModifier {
           children.add(newChild);
         }
       });
-      if (children.length == 0) {
+      if (children.isEmpty) {
         return null;
       } else if (children.length == 1) {
         return children.first;
@@ -61,9 +61,9 @@ class RemoveItemById extends LayoutModifier {
         return DockingColumn(children, id: area.id);
       }
       throw ArgumentError(
-          'DockingArea class not recognized: ' + area.runtimeType.toString());
+          'DockingArea class not recognized: ${area.runtimeType}');
     }
     throw ArgumentError(
-        'DockingArea class not recognized: ' + area.runtimeType.toString());
+        'DockingArea class not recognized: ${area.runtimeType}');
   }
 }

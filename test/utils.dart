@@ -16,7 +16,7 @@ void removeItemById(DockingLayout layout, List<dynamic> ids) {
   }
   List<DockingArea> areas = layout.layoutAreas();
   layout.removeItemByIds(ids);
-  areas.forEach((area) {
+  for (var area in areas) {
     bool areaIsDisposedItem = false;
     for (DockingItem disposedItem in itemsToDispose) {
       if (area == disposedItem) {
@@ -29,7 +29,7 @@ void removeItemById(DockingLayout layout, List<dynamic> ids) {
     } else {
       testDisposed(area);
     }
-  });
+  }
 }
 
 void removeItem(DockingLayout layout, DockingItem item) {
@@ -98,7 +98,7 @@ void testAreasAttributes(DockingLayout layout) {
 }
 
 void testHierarchy(DockingLayout layout, String hierarchy) {
-  if (hierarchy.length == 0) {
+  if (hierarchy.isEmpty) {
     expect(layout.root, isNull);
   } else {
     expect(layout.root, isNotNull);
@@ -113,13 +113,13 @@ void testNonDisposedArea(DockingArea area) {
 }
 
 void testOldAreas(List<DockingArea> layoutAreas, {DockingItem? disposedItem}) {
-  layoutAreas.forEach((area) {
+  for (var area in layoutAreas) {
     if (area is DockingItem && area != disposedItem) {
       testNonDisposedArea(area);
     } else {
       testDisposed(area);
     }
-  });
+  }
 }
 
 void testDockingArea(DockingArea area,
@@ -166,8 +166,8 @@ void testDockingItem(DockingArea item,
   testDockingArea(item,
       layoutIndex: layoutIndex, hasParent: hasParent, level: level, path: path);
   expect(item.type, DockingAreaType.item, reason: 'type');
-  DockingItem _item = item as DockingItem;
-  expect(_item.name, name, reason: 'name');
+  DockingItem item0 = item as DockingItem;
+  expect(item0.name, name, reason: 'name');
 }
 
 DockingRow rootAsRow(DockingLayout layout) {

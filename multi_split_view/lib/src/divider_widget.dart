@@ -11,12 +11,14 @@ import 'package:multi_split_view/src/theme_data.dart';
 /// tooltip widget).
 class DividerWidget extends StatefulWidget {
   const DividerWidget(
-      {required this.axis,
+      {Key? key,
+      required this.axis,
       required this.index,
       required this.themeData,
       required this.resizable,
       required this.dragging,
-      required this.highlighted});
+      required this.highlighted})
+      : super(key: key);
 
   final Axis axis;
   final int index;
@@ -33,7 +35,7 @@ class DividerWidget extends StatefulWidget {
 class _DividerWidgetState extends State<DividerWidget>
     with TickerProviderStateMixin {
   AnimationController? controller;
-  Map<int, Animation> animations = Map<int, Animation>();
+  Map<int, Animation> animations = <int, Animation>{};
 
   @override
   void initState() {
@@ -88,19 +90,19 @@ class _DividerWidgetState extends State<DividerWidget>
   Widget build(BuildContext context) {
     Widget dividerWidget;
     if (widget.themeData.dividerPainter != null) {
-      Map<int, dynamic> animatedValues = Map<int, dynamic>();
+      Map<int, dynamic> animatedValues = <int, dynamic>{};
       animations.forEach((key, animation) {
         animatedValues[key] = animation.value;
       });
 
       dividerWidget = CustomPaint(
-          child: Container(),
           painter: _DividerPainterWrapper(
               axis: widget.axis,
               resizable: widget.resizable,
               highlighted: widget.highlighted,
               dividerPainter: widget.themeData.dividerPainter!,
-              animatedValues: animatedValues));
+              animatedValues: animatedValues),
+          child: Container());
     } else {
       dividerWidget = Container();
     }

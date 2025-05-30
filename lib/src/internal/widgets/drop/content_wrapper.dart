@@ -35,32 +35,32 @@ abstract class ContentWrapperBase extends StatelessWidget {
       final double verticalEdgeHeight = constraints.maxHeight / 2;
 
       children.add(Positioned(
-          child: buildDropAnchor(DropPosition.left),
           width: horizontalEdgeWidth,
           bottom: 0,
           top: 0,
-          left: 0));
+          left: 0,
+          child: buildDropAnchor(DropPosition.left)));
 
       children.add(Positioned(
-          child: buildDropAnchor(DropPosition.right),
           width: horizontalEdgeWidth,
           bottom: 0,
           top: 0,
-          right: 0));
+          right: 0,
+          child: buildDropAnchor(DropPosition.right)));
 
       children.add(Positioned(
-          child: buildDropAnchor(DropPosition.top),
           height: verticalEdgeHeight,
           top: 0,
           left: horizontalEdgeWidth,
-          right: horizontalEdgeWidth));
+          right: horizontalEdgeWidth,
+          child: buildDropAnchor(DropPosition.top)));
 
       children.add(Positioned(
-          child: buildDropAnchor(DropPosition.bottom),
           height: verticalEdgeHeight,
           bottom: 0,
           left: horizontalEdgeWidth,
-          right: horizontalEdgeWidth));
+          right: horizontalEdgeWidth,
+          child: buildDropAnchor(DropPosition.bottom)));
 
       return Stack(children: children);
     });
@@ -71,13 +71,14 @@ abstract class ContentWrapperBase extends StatelessWidget {
 
 @internal
 class ItemContentWrapper extends ContentWrapperBase {
-  ItemContentWrapper(
-      {required DockingLayout layout,
+  const ItemContentWrapper(
+      {Key? key,
+      required DockingLayout layout,
       required DropWidgetListener listener,
       required DockingItem dockingItem,
       required Widget child})
       : _dockingItem = dockingItem,
-        super(layout: layout, listener: listener, child: child);
+        super(key: key, layout: layout, listener: listener, child: child);
 
   final DockingItem _dockingItem;
 
@@ -93,13 +94,14 @@ class ItemContentWrapper extends ContentWrapperBase {
 
 @internal
 class TabsContentWrapper extends ContentWrapperBase {
-  TabsContentWrapper(
-      {required DockingLayout layout,
+  const TabsContentWrapper(
+      {Key? key,
+      required DockingLayout layout,
       required DropWidgetListener listener,
       required DockingTabs dockingTabs,
       required Widget child})
       : _dockingTabs = dockingTabs,
-        super(layout: layout, listener: listener, child: child);
+        super(key: key, layout: layout, listener: listener, child: child);
 
   final DockingTabs _dockingTabs;
 
