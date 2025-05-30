@@ -13,6 +13,19 @@ import 'package:docking/src/theme/docking_theme.dart';
 import 'package:docking/src/theme/docking_theme_data.dart';
 import 'package:flutter/material.dart';
 import 'package:tabbed_view/tabbed_view.dart';
+import 'package:get_it/get_it.dart';
+
+/// State management for DockingTabsWidget using ValueNotifiers
+class DockingTabsState {
+  final ValueNotifier<DropPosition?> activeDropPositionNotifier = ValueNotifier<DropPosition?>(null);
+  
+  DropPosition? get activeDropPosition => activeDropPositionNotifier.value;
+  set activeDropPosition(DropPosition? value) => activeDropPositionNotifier.value = value;
+  
+  void dispose() {
+    activeDropPositionNotifier.dispose();
+  }
+}
 
 /// Represents a widget for [DockingTabs].
 class DockingTabsWidget extends StatefulWidget {
@@ -47,7 +60,19 @@ class DockingTabsWidget extends StatefulWidget {
 
 class DockingTabsWidgetState extends State<DockingTabsWidget>
     with DraggableConfigMixin {
-  DropPosition? _activeDropPosition;
+  late DockingTabsState _state;
+
+  @override
+  void initState() {
+    super.initState();
+    // Register state management in DI if not already registered
+    final String stateKey = 'DockingTabsState_${widget.dockingTabs.hashCode}';
+    if (!GetIt.instance.isRegistered<DockingTabsState>(instanceName: stateKey)) {
+      GetIt.instance.registerSingleton<DockingTabsState>(
+          DockingTabsState(), instanceName: stateKey);
+    }
+    _state = GetIt.instance<DockingTabsState>(instanceName: stateKey);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -118,18 +143,24 @@ class DockingTabsWidgetState extends State<DockingTabsWidget>
             dockingTabs: widget.dockingTabs,
             child: controller.tabs[tabIndex].content!),
         onBeforeDropAccept: widget.draggable ? _onBeforeDropAccept : null);
+    
     if (widget.draggable && widget.dragOverPosition.enable) {
-      return DropFeedbackWidget(
-          dropPosition: _activeDropPosition, child: tabbedView);
+      // Use ValueListenableBuilder for reactive updates
+      return ValueListenableBuilder<DropPosition?>(
+        valueListenable: _state.activeDropPositionNotifier,
+        builder: (context, activeDropPosition, child) {
+          return DropFeedbackWidget(
+              dropPosition: activeDropPosition, child: tabbedView);
+        },
+      );
     }
     return tabbedView;
   }
 
   void _updateActiveDropPosition(DropPosition? dropPosition) {
-    if (_activeDropPosition != dropPosition) {
-      setState(() {
-        _activeDropPosition = dropPosition;
-      });
+    if (_state.activeDropPosition != dropPosition) {
+      // Use reactive state management instead of setState
+      _state.activeDropPosition = dropPosition;
     }
   }
 
@@ -181,5 +212,15 @@ class DockingTabsWidgetState extends State<DockingTabsWidget>
     if (widget.onItemClose != null) {
       widget.onItemClose!(dockingItem);
     }
+  }
+
+  @override
+  void dispose() {
+    // Clean up the state when widget is disposed
+    final String stateKey = 'DockingTabsState_${widget.dockingTabs.hashCode}';
+    if (GetIt.instance.isRegistered<DockingTabsState>(instanceName: stateKey)) {
+      GetIt.instance.unregister<DockingTabsState>(instanceName: stateKey);
+    }
+    super.dispose();
   }
 }

@@ -1,6 +1,23 @@
 import 'package:flutter/widgets.dart';
+import 'package:watch_it/watch_it.dart';
+import 'package:get_it/get_it.dart';
 import 'package:multi_split_view/src/divider_painter.dart';
 import 'package:multi_split_view/src/theme_data.dart';
+
+/// State management for DividerWidget using ValueNotifiers
+class DividerWidgetState {
+  final ValueNotifier<int> rebuildTriggerNotifier = ValueNotifier<int>(0);
+  
+  int get rebuildTrigger => rebuildTriggerNotifier.value;
+  
+  void triggerRebuild() {
+    rebuildTriggerNotifier.value = rebuildTriggerNotifier.value + 1;
+  }
+  
+  void dispose() {
+    rebuildTriggerNotifier.dispose();
+  }
+}
 
 /// The standard divider widget for [MultiSplitView] that renders
 /// the [DividerPainter] from the current [MultiSplitViewTheme].
@@ -36,10 +53,16 @@ class _DividerWidgetState extends State<DividerWidget>
     with TickerProviderStateMixin {
   AnimationController? controller;
   Map<int, Animation> animations = <int, Animation>{};
+  late DividerWidgetState _state;
 
   @override
   void initState() {
     super.initState();
+    // Register state management in DI if not already registered
+    if (!GetIt.instance.isRegistered<DividerWidgetState>()) {
+      GetIt.instance.registerSingleton<DividerWidgetState>(DividerWidgetState());
+    }
+    _state = GetIt.instance<DividerWidgetState>();
     _initializeAnimations(null);
   }
 
@@ -81,33 +104,38 @@ class _DividerWidgetState extends State<DividerWidget>
   }
 
   void _rebuild() {
-    setState(() {
-      // rebuild
-    });
+    // Use reactive state management instead of setState
+    _state.triggerRebuild();
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget dividerWidget;
-    if (widget.themeData.dividerPainter != null) {
-      Map<int, dynamic> animatedValues = <int, dynamic>{};
-      animations.forEach((key, animation) {
-        animatedValues[key] = animation.value;
-      });
+    // Use ValueListenableBuilder for reactive updates
+    return ValueListenableBuilder<int>(
+      valueListenable: _state.rebuildTriggerNotifier,
+      builder: (context, rebuildTrigger, child) {
+        Widget dividerWidget;
+        if (widget.themeData.dividerPainter != null) {
+          Map<int, dynamic> animatedValues = <int, dynamic>{};
+          animations.forEach((key, animation) {
+            animatedValues[key] = animation.value;
+          });
 
-      dividerWidget = CustomPaint(
-          painter: _DividerPainterWrapper(
-              axis: widget.axis,
-              resizable: widget.resizable,
-              highlighted: widget.highlighted,
-              dividerPainter: widget.themeData.dividerPainter!,
-              animatedValues: animatedValues),
-          child: Container());
-    } else {
-      dividerWidget = Container();
-    }
+          dividerWidget = CustomPaint(
+              painter: _DividerPainterWrapper(
+                  axis: widget.axis,
+                  resizable: widget.resizable,
+                  highlighted: widget.highlighted,
+                  dividerPainter: widget.themeData.dividerPainter!,
+                  animatedValues: animatedValues),
+              child: Container());
+        } else {
+          dividerWidget = Container();
+        }
 
-    return dividerWidget;
+        return dividerWidget;
+      },
+    );
   }
 
   @override

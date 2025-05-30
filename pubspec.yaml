@@ -12,10 +12,10 @@ dependencies:
   flutter:
     sdk: flutter
   meta: ^1.7.0
-  tabbed_view: '>=1.18.0 <1.19.0'
-    #path: ../tabbed_view/
+  tabbed_view: ^1.17.0
   multi_split_view:
-    path: ./multi_split_view/
+    path: "./multi_split_view"
+  watch_it: ^1.5.1
 
 dev_dependencies:
   flutter_test:

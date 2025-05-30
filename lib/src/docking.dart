@@ -1,13 +1,35 @@
-import 'package:docking/docking.dart';
 import 'package:docking/src/drag_over_position.dart';
 import 'package:docking/src/internal/widgets/docking_item_widget.dart';
 import 'package:docking/src/internal/widgets/docking_tabs_widget.dart';
+import 'package:docking/src/layout/docking_layout.dart';
+import 'package:docking/src/on_item_close.dart';
+import 'package:docking/src/on_item_selection.dart';
+import 'package:docking/src/docking_buttons_builder.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'dart:math' as math;
+import 'package:multi_split_view/multi_split_view.dart';
+import 'package:tabbed_view/tabbed_view.dart';
+import 'package:watch_it/watch_it.dart';
+import 'package:get_it/get_it.dart';
 
 /// Callback function type for when a DockingArea's dimensions change.
 typedef OnAreaDimensionsChange = void Function(DockingArea area);
+
+/// State management for Docking using ValueNotifiers
+class DockingState {
+  final ValueNotifier<int> rebuildTriggerNotifier = ValueNotifier<int>(0);
+  
+  int get rebuildTrigger => rebuildTriggerNotifier.value;
+  
+  void triggerRebuild() {
+    rebuildTriggerNotifier.value = rebuildTriggerNotifier.value + 1;
+  }
+  
+  void dispose() {
+    rebuildTriggerNotifier.dispose();
+  }
+}
 
 /// A StatelessWidget that uses ValueListenableBuilder to potentially react to changes
 /// related to a specific DockingArea, if a suitable ValueListenable is provided.
@@ -43,8 +65,8 @@ class _AreaWatcher extends StatelessWidget {
 }
 
 /// The docking widget.
-class Docking extends StatefulWidget {
-  const Docking({
+class Docking extends StatelessWidget with WatchItMixin {
+  Docking({
     Key? key,
     this.layout,
     this.onItemSelection,
@@ -57,7 +79,14 @@ class Docking extends StatefulWidget {
     this.antiAliasingWorkaround = true,
     this.draggable = true,
     this.onAreaDimensionsChange,
-  }) : super(key: key);
+    this.diInstance,
+  }) : super(key: key) {
+    // Register state management in DI if not already registered
+    final di = diInstance ?? GetIt.instance;
+    if (!di.isRegistered<DockingState>()) {
+      di.registerSingleton<DockingState>(DockingState());
+    }
+  }
 
   final DockingLayout? layout;
   final OnItemSelection? onItemSelection;
@@ -70,50 +99,27 @@ class Docking extends StatefulWidget {
   final bool antiAliasingWorkaround;
   final bool draggable;
   final OnAreaDimensionsChange? onAreaDimensionsChange;
-
-  @override
-  State<StatefulWidget> createState() => _DockingState();
-}
-
-/// The [Docking] state.
-class _DockingState extends State<Docking> {
-  final DragOverPosition _dragOverPosition = DragOverPosition();
-
-  @override
-  void initState() {
-    super.initState();
-    _dragOverPosition.addListener(_forceRebuild);
-    widget.layout?.addListener(_forceRebuild);
-  }
-
-  @override
-  void dispose() {
-    super.dispose();
-    _dragOverPosition.removeListener(_forceRebuild);
-    widget.layout?.removeListener(_forceRebuild);
-  }
-
-  @override
-  void didUpdateWidget(Docking oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.layout != widget.layout) {
-      oldWidget.layout?.removeListener(_forceRebuild);
-      widget.layout?.addListener(_forceRebuild);
-    }
-  }
+  final dynamic diInstance;
 
   @override
   Widget build(BuildContext context) {
-    if (widget.layout?.root != null) {
-      final Widget child = _buildArea(widget.layout!.root!);
-      if (widget.layout!.maximizedArea != null) {
-        List<DockingArea> areas = widget.layout!.layoutAreas();
+    // Get state from DI and watch for changes
+    final di = diInstance ?? GetIt.instance;
+    final state = di<DockingState>();
+    final rebuildTrigger = watchValue((DockingState s) => s.rebuildTriggerNotifier);
+    
+    final dragOverPosition = DragOverPosition();
+    
+    if (layout?.root != null) {
+      final Widget child = _buildArea(layout!.root!, dragOverPosition);
+      if (layout!.maximizedArea != null) {
+        List<DockingArea> areas = layout!.layoutAreas();
         List<Widget> children = [];
         for (DockingArea area in areas) {
-          if (area != widget.layout!.maximizedArea!) {
+          if (area != layout!.maximizedArea!) {
             if (area is DockingItem &&
                 area.globalKey != null &&
-                area.parent != widget.layout!.maximizedArea) {
+                area.parent != layout!.maximizedArea) {
               // keeping alive other areas
               children.add(ExcludeFocus(
                   child: Offstage(
@@ -121,7 +127,7 @@ class _DockingState extends State<Docking> {
                       child: TickerMode(
                           enabled: false,
                           child: Builder(builder: (context) {
-                            return _buildArea(area);
+                            return _buildArea(area, dragOverPosition);
                           })))));
             }
           }
@@ -134,20 +140,20 @@ class _DockingState extends State<Docking> {
     return Container();
   }
 
-  Widget _buildArea(DockingArea area) {
+  Widget _buildArea(DockingArea area, DragOverPosition dragOverPosition) {
     Widget actualBuiltWidget;
     if (area is DockingItem) {
       actualBuiltWidget = DockingItemWidget(
           key: area.key,
-          layout: widget.layout!,
-          dragOverPosition: _dragOverPosition,
-          draggable: widget.draggable,
+          layout: layout!,
+          dragOverPosition: dragOverPosition,
+          draggable: draggable,
           item: area,
-          onItemSelection: widget.onItemSelection,
-          itemCloseInterceptor: widget.itemCloseInterceptor,
-          onItemClose: widget.onItemClose,
-          dockingButtonsBuilder: widget.dockingButtonsBuilder,
-          maximizable: widget.maximizableItem);
+          onItemSelection: onItemSelection,
+          itemCloseInterceptor: itemCloseInterceptor,
+          onItemClose: onItemClose,
+          dockingButtonsBuilder: dockingButtonsBuilder,
+          maximizable: maximizableItem);
     } else if (area is DockingRow) {
       actualBuiltWidget = _row(area);
     } else if (area is DockingColumn) {
@@ -156,28 +162,28 @@ class _DockingState extends State<Docking> {
       if (area.childrenCount == 1) {
         actualBuiltWidget = DockingItemWidget(
             key: area.key,
-            layout: widget.layout!,
-            dragOverPosition: _dragOverPosition,
-            draggable: widget.draggable,
+            layout: layout!,
+            dragOverPosition: dragOverPosition,
+            draggable: draggable,
             item: area.childAt(0),
-            onItemSelection: widget.onItemSelection,
-            itemCloseInterceptor: widget.itemCloseInterceptor,
-            onItemClose: widget.onItemClose,
-            dockingButtonsBuilder: widget.dockingButtonsBuilder,
-            maximizable: widget.maximizableItem);
+            onItemSelection: onItemSelection,
+            itemCloseInterceptor: itemCloseInterceptor,
+            onItemClose: onItemClose,
+            dockingButtonsBuilder: dockingButtonsBuilder,
+            maximizable: maximizableItem);
       } else {
         actualBuiltWidget = DockingTabsWidget(
             key: area.key,
-            layout: widget.layout!,
-            dragOverPosition: _dragOverPosition,
-            draggable: widget.draggable,
+            layout: layout!,
+            dragOverPosition: dragOverPosition,
+            draggable: draggable,
             dockingTabs: area,
-            onItemSelection: widget.onItemSelection,
-            onItemClose: widget.onItemClose,
-            itemCloseInterceptor: widget.itemCloseInterceptor,
-            dockingButtonsBuilder: widget.dockingButtonsBuilder,
-            maximizableTab: widget.maximizableTab,
-            maximizableTabsArea: widget.maximizableTabsArea);
+            onItemSelection: onItemSelection,
+            onItemClose: onItemClose,
+            itemCloseInterceptor: itemCloseInterceptor,
+            dockingButtonsBuilder: dockingButtonsBuilder,
+            maximizableTab: maximizableTab,
+            maximizableTabsArea: maximizableTabsArea);
       }
     } else {
       throw UnimplementedError('Area not supported: ${area.runtimeType}');
@@ -188,12 +194,13 @@ class _DockingState extends State<Docking> {
   Widget _row(DockingRow row) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return MultiSplitView(
+        return _ReactiveMultiSplitView(
           axis: Axis.horizontal,
           controller: _buildController(row),
           onWeightChange: () =>
               _updateAreaDimensions(row, constraints, Axis.horizontal),
           children: _buildDockingChildren(row),
+          diInstance: diInstance,
         );
       },
     );
@@ -202,12 +209,13 @@ class _DockingState extends State<Docking> {
   Widget _column(DockingColumn column) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        return MultiSplitView(
+        return _ReactiveMultiSplitView(
           axis: Axis.vertical,
           controller: _buildController(column),
           onWeightChange: () =>
               _updateAreaDimensions(column, constraints, Axis.vertical),
           children: _buildDockingChildren(column),
+          diInstance: diInstance,
         );
       },
     );
@@ -228,7 +236,7 @@ class _DockingState extends State<Docking> {
     List<Widget> widgets = [];
     for (int i = 0; i < parent.childrenCount; i++) {
       try {
-        widgets.add(_buildArea(parent.childAt(i)));
+        widgets.add(_buildArea(parent.childAt(i), DragOverPosition()));
       } catch (e) {
         print("Error building child widget at index $i: $e");
       }
@@ -237,9 +245,10 @@ class _DockingState extends State<Docking> {
   }
 
   void _forceRebuild() {
-    setState(() {
-      // just rebuild
-    });
+    // Use reactive state management instead of setState
+    final di = diInstance ?? GetIt.instance;
+    final state = di<DockingState>();
+    state.triggerRebuild();
   }
 
   /// Updates the pixel dimensions of child areas after a resize.
@@ -299,9 +308,39 @@ class _DockingState extends State<Docking> {
       dockingArea.updateDimensions(newWidth, newHeight);
 
       // Trigger the callback to notify listeners (like the main app)
-      widget.onAreaDimensionsChange?.call(dockingArea);
+      onAreaDimensionsChange?.call(dockingArea);
     }
 
     _forceRebuild();
+  }
+}
+
+/// Reactive wrapper for MultiSplitView that uses dependency injection for state management
+class _ReactiveMultiSplitView extends StatelessWidget {
+  const _ReactiveMultiSplitView({
+    Key? key,
+    required this.axis,
+    required this.controller,
+    required this.onWeightChange,
+    required this.children,
+    this.diInstance,
+  }) : super(key: key);
+
+  final Axis axis;
+  final MultiSplitViewController controller;
+  final VoidCallback onWeightChange;
+  final List<Widget> children;
+  final dynamic diInstance;
+
+  @override
+  Widget build(BuildContext context) {
+    // Use the reactive MultiSplitView with DI
+    return MultiSplitView(
+      axis: axis,
+      controller: controller,
+      onWeightChange: onWeightChange,
+      children: children,
+      diInstance: diInstance,
+    );
   }
 }
